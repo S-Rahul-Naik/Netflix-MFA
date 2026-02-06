@@ -1,0 +1,38 @@
+.App {
+  min-height: 100vh;
+  background: #000;
+}
+
+/* Global Styles */
+:root {
+  --primary-color: #e50914;
+  --dark-color: #141414;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #fff;
+}
+
+a {
+  color: #fff;
+  text-decoration: none;
+}
+
+p {
+  margin: 0.5rem 0;
+  color: #fff;
+}
+
+img {
+  width: 100%;
+}
+
+ul {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+  outline: none;
+  border: none;
+}
