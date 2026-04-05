@@ -59,7 +59,8 @@ router.post('/signup', [
       user: {
         id: user._id,
         email: user.email,
-        mfaEnabled: user.mfaEnabled
+        mfaEnabled: user.mfaEnabled,
+        mfaSetupPending: user.mfaSetupPending
       }
     });
   } catch (error) {
@@ -124,6 +125,23 @@ router.post('/signin', [
       });
     }
 
+    if (user.mfaSetupPending) {
+      const token = generateToken(user._id);
+
+      return res.json({
+        success: true,
+        mfaSuggested: true,
+        message: 'MFA is recommended for this account',
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          mfaEnabled: user.mfaEnabled,
+          mfaSetupPending: user.mfaSetupPending
+        }
+      });
+    }
+
     // Generate token (no MFA)
     const token = generateToken(user._id);
 
@@ -134,7 +152,8 @@ router.post('/signin', [
       user: {
         id: user._id,
         email: user.email,
-        mfaEnabled: user.mfaEnabled
+        mfaEnabled: user.mfaEnabled,
+        mfaSetupPending: user.mfaSetupPending
       }
     });
   } catch (error) {
@@ -338,6 +357,7 @@ router.get('/me', authMiddleware, async (req, res) => {
         id: user._id,
         email: user.email,
         mfaEnabled: user.mfaEnabled,
+        mfaSetupPending: user.mfaSetupPending,
         emailVerified: user.emailVerified
       }
     });
@@ -373,6 +393,35 @@ router.post('/disable-mfa', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Disable MFA error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   POST /api/auth/skip-mfa-setup
+// @desc    Mark MFA setup as skipped for now
+// @access  Private
+router.post('/skip-mfa-setup', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    user.mfaSetupPending = true;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'MFA setup marked as skipped for now'
+    });
+  } catch (error) {
+    console.error('Skip MFA setup error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

@@ -78,6 +78,12 @@ export const authAPI = {
     return response.data;
   },
 
+  // Mark MFA setup as skipped for now
+  skipMFASetup: async () => {
+    const response = await api.post('/skip-mfa-setup');
+    return response.data;
+  },
+
   // Logout
   logout: () => {
     localStorage.removeItem('token');

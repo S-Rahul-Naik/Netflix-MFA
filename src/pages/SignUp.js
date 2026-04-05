@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../firebase';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -17,7 +17,15 @@ const SignUp = () => {
   const [secret, setSecret] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { setCurrentUser } = useAuth();
+  const isLoginEnrollmentFlow = Boolean(location.state?.mfaEnrollment);
+
+  useEffect(() => {
+    if (location.state?.mfaEnrollment) {
+      setStep(2);
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     setFormData({
@@ -103,8 +111,19 @@ const SignUp = () => {
   };
 
   const skipMFA = () => {
-    toast.info('You can enable MFA later in settings');
-    navigate('/browse');
+    setLoading(true);
+    authAPI.skipMFASetup()
+      .then(() => {
+        toast.info('MFA setup skipped for now. We will ask again on next sign in.');
+        navigate('/browse');
+      })
+      .catch((error) => {
+        console.error('Skip MFA error:', error);
+        toast.error(error.response?.data?.message || 'Failed to skip MFA setup');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (
@@ -161,10 +180,11 @@ const SignUp = () => {
 
           {step === 2 && (
             <div className="auth-form">
-              <h2>Setup Multi-Factor Authentication</h2>
+              <h2>{isLoginEnrollmentFlow ? 'Complete MFA Setup' : 'Setup Multi-Factor Authentication'}</h2>
               <p className="info-text">
-                Add an extra layer of security by enabling MFA with an authenticator app
-                like Google Authenticator or Microsoft Authenticator.
+                {isLoginEnrollmentFlow
+                  ? 'Before continuing, complete MFA setup using an authenticator app.'
+                  : 'Add an extra layer of security by enabling MFA with an authenticator app like Google Authenticator or Microsoft Authenticator.'}
               </p>
               <div className="mfa-options">
                 <div className="mfa-option">
@@ -182,7 +202,7 @@ const SignUp = () => {
                 className="auth-button"
                 disabled={loading}
               >
-                {loading ? 'Setting Up...' : 'Setup MFA'}
+                {loading ? 'Setting Up...' : (isLoginEnrollmentFlow ? 'Continue MFA Setup' : 'Setup MFA')}
               </button>
               <button 
                 onClick={skipMFA} 

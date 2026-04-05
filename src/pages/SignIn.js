@@ -37,6 +37,11 @@ const SignIn = () => {
         setMfaRequired(true);
         setMfaStep(true);
         toast.info('Please enter code from your authenticator app');
+      } else if (response.mfaSuggested) {
+        // User skipped MFA setup earlier, send them to the MFA enrollment screen
+        setCurrentUser(response.user);
+        setMfaRequired(false);
+        navigate('/signup', { state: { mfaEnrollment: true } });
       } else if (response.success) {
         // No MFA, direct signin
         setCurrentUser(response.user);
@@ -149,6 +154,7 @@ const SignIn = () => {
                   setMfaStep(false);
                   setVerificationCode('');
                   setTempToken('');
+                  setMfaRequired(false);
                 }}
                 className="auth-button secondary"
               >

@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  mfaSetupPending: {
+    type: Boolean,
+    default: false
+  },
   mfaSecret: {
     type: String,
     default: null
